@@ -22,7 +22,7 @@ set -e
   # by default it will presume 'usr/local/n64_toolchain'
   INSTALL_PATH="${N64_INST:-/usr/local/linux-x86_64/n64_toolchain}"
   # rm -rf "$INSTALL_PATH" # We should probably do a clean install?!
-  mkdir -p "$INSTALL_PATH" # But make sure the install path exists!
+  sudo mkdir -p "$INSTALL_PATH" # But make sure the install path exists!
 
   # Defines the build system variables to allow cross compilation.
 TARGET="mips64-elf"
@@ -224,7 +224,7 @@ u
   make clean
 
   FOREIGN_INSTALL_PATH="${N64_INST:-/usr/local/windowsx86_64/n64_toolchain}"
-  mkdir -p $FOREIGN_INSTALL_PATH
+  sudo mkdir -p $FOREIGN_INSTALL_PATH
 
   echo "Compiling binutils-$BINUTILS_V for foreign host"
   cd ../"binutils-$BINUTILS_V"
