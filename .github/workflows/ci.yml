@@ -187,7 +187,7 @@ jobs:
       - name: Export image tag (latest)
         if: ${{ steps.path_diff.outputs.changed == 0 }}
         run: |
-          echo "DOCKER_TAG=${GITHUB_REPOSITORY_LOWERCASE}:${{ github.ref_name }} >>${GITHUB_ENV}
+          echo "DOCKER_TAG=${GITHUB_REPOSITORY_LOWERCASE}:${{ github.ref_name }}" >>${GITHUB_ENV}
 
   # Compile-Library-Unit-Test-And-Sample-ROMs:
   #   runs-on: ubuntu-latest
