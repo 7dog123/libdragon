@@ -202,7 +202,7 @@ jobs:
           docker run \
           --mount type=bind,source=$(pwd),target=/libdragon \
           --workdir=/libdragon \
-          ghcr.io/dragonminded/libdragon:latest \
+          ghcr.io/${{env.DOCKER_TAG}} \
           ./build.sh
 
       - name: "Upload all built ROMs to artifacts"
