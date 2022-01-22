@@ -18,41 +18,36 @@ IFS=$'\n\t'
 # Exit script on error
 set -e
 
-# Ensure you set 'N64_INST' before calling the script to change the default installation directory path
+  # Ensure you set 'N64_INST' before calling the script to change the default installation directory path
   # by default it will presume 'usr/local/n64_toolchain'
-  INSTALL_PATH="${N64_INST:-/usr/local}"
+  INSTALL_PATH="${N64_INST:-/usr/local/linux-x86_64/n64_toolchain}"
   # rm -rf "$INSTALL_PATH" # We should probably do a clean install?!
   mkdir -p "$INSTALL_PATH" # But make sure the install path exists!
 
   # Defines the build system variables to allow cross compilation.
-  BUILD=${BUILD:-x86_64-linux-gnu}
-  HOST=${HOST:-x86_64-linux-gnu}
-  TARGET=${TARGET:-mips64-elf}
+TARGET="mips64-elf"
+TARG_XTRA_OPTS=""
 
+if [ -e /usr/bin/x86_64-w64-mingw32-gcc ]; then
+  export CC=x86_64-w64-mingw32-gcc
+  TARG_XTRA_OPTS="--host=x86_64-w64-mingw32"
+fi
   # Dependency source libs (Versions)
-  # This will allow the optional use of FP lib source 
+  # This will allow the optional use of FP lib source
   # (if not available for the host or build system)
   # By default it uses the installed system versions.
   GMP_V=${GMP_V:-""}
   MPC_V=${MPC_V:-""}
   MPFR_V=${MPFR_V:-""}
   # This will allow the optional build of Make against a specific version
-  # (useful for cross compiling). 
+  # (useful for cross compiling).
   MAKE_V=${MAKE_V:-""}
 
 # Check for cross compile script flag
-if [ "$BUILD" != "$HOST" ]; then # cross compile (host) flag is specified.
+if [ -e /usr/bin/x86_64-w64-mingw32-gcc ]; then # cross compile (host) flag is specified.
   # This (may) also require the following (extra) package dependencies:
   # sudo apt-get install -yq mingw-w64 libgmp-dev bison libz-mingw-w64-dev autoconf
   echo "Cross compiling for different host"
-  
-  # Use the current-directory/$HOST/n64_toolchain for the install path for non native parts, as these is not for the current system!
-  # THIS_SCRIPT_PATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-  # always ensure the folder is clean (if rebuilding)
-  # rm -rf "$THIS_SCRIPT_PATH/$HOST"
-  # mkdir -p "$THIS_SCRIPT_PATH/$HOST"
-  # FOREIGN_INSTALL_PATH="$THIS_SCRIPT_PATH/$HOST"
-
 else # We are compiling for the native system.
   echo "building for native system"
 
@@ -94,38 +89,44 @@ test -d "gcc-$GCC_V"                  || tar -xzf "gcc-$GCC_V.tar.gz" --checkpoi
 test -f "newlib-$NEWLIB_V.tar.gz"     || download "https://sourceware.org/pub/newlib/newlib-$NEWLIB_V.tar.gz"
 test -d "newlib-$NEWLIB_V"            || tar -xzf "newlib-$NEWLIB_V.tar.gz"
 
-# Optional dependency handling
-# Copies the FP libs into GCC sources so they are compiled as part of it
-if [ "$GMP_V" != "" ]; then
-  test -f "gmp-$GMP_V.tar.xz"         || download "https://ftp.gnu.org/gnu/gmp/gmp-$GMP_V.tar.xz"
-  test -d "gmp-$GMP_V"                || tar -xf "gmp-$GMP_V.tar.xz" # note no .gz download file currently available
-  cd "gcc-$GCC_V"
-  ln -sf ../"gmp-$GMP_V" "gmp"
-  cd ..
-fi
-if [ "$MPC_V" != "" ]; then
-  test -f "mpc-$MPC_V.tar.gz"         || download "https://ftp.gnu.org/gnu/mpc/mpc-$MPC_V.tar.gz"
-  test -d "mpc-$MPC_V"                || tar -xzf "mpc-$MPC_V.tar.gz"
-  cd "gcc-$GCC_V"
-  ln -sf ../"mpc-$MPC_V" "mpc"
-  cd ..
-fi
-if [ "$MPFR_V" != "" ]; then
-  test -f "mpfr-$MPFR_V.tar.gz"       || download "https://ftp.gnu.org/gnu/mpfr/mpfr-$MPFR_V.tar.gz"
-  test -d "mpfr-$MPFR_V"              || tar -xzf "mpfr-$MPFR_V.tar.gz"
-  cd "gcc-$GCC_V"
-  ln -sf ../"mpfr-$MPFR_V" "mpfr"
-  cd ..
-fi
-# Certain platforms might require Makefile cross compiling
-if [ "$MAKE_V" != "" ]; then
-  test -f "make-$MAKE_V.tar.gz"       || download "https://ftp.gnu.org/gnu/make/make-$MAKE_V.tar.gz"
-  test -d "make-$MAKE_V"              || tar -xzf "make-$MAKE_V.tar.gz"
+if [ -e /usr/bin/x86_64-w64-mingw32-gcc ]; then
+  GMP_V=6.2.0
+  MPC_V=1.2.1
+  MPFR_V=4.1.0
+  MAKE_V=4.2.1
+  # Optional dependency handling
+  # Copies the FP libs into GCC sources so they are compiled as part of it
+  if [ "$GMP_V" != "" ]; then
+    test -f "gmp-$GMP_V.tar.xz"         || download "https://ftp.gnu.org/gnu/gmp/gmp-$GMP_V.tar.xz"
+    test -d "gmp-$GMP_V"                || tar -xf "gmp-$GMP_V.tar.xz" # note no .gz download file currently available
+    cd "gcc-$GCC_V"
+    ln -sf ../"gmp-$GMP_V" "gmp"
+    cd ..
+  fi
+  if [ "$MPC_V" != "" ]; then
+    test -f "mpc-$MPC_V.tar.gz"         || download "https://ftp.gnu.org/gnu/mpc/mpc-$MPC_V.tar.gz"
+    test -d "mpc-$MPC_V"                || tar -xzf "mpc-$MPC_V.tar.gz"
+    cd "gcc-$GCC_V"
+    ln -sf ../"mpc-$MPC_V" "mpc"
+    cd ..
+  fi
+  if [ "$MPFR_V" != "" ]; then
+    test -f "mpfr-$MPFR_V.tar.gz"       || download "https://ftp.gnu.org/gnu/mpfr/mpfr-$MPFR_V.tar.gz"
+    test -d "mpfr-$MPFR_V"              || tar -xzf "mpfr-$MPFR_V.tar.gz"
+    cd "gcc-$GCC_V"
+    ln -sf ../"mpfr-$MPFR_V" "mpfr"
+    cd ..
+  fi
+  # Certain platforms might require Makefile cross compiling
+  if [ "$MAKE_V" != "" ]; then
+    test -f "make-$MAKE_V.tar.gz"       || download "https://ftp.gnu.org/gnu/make/make-$MAKE_V.tar.gz"
+    test -d "make-$MAKE_V"              || tar -xzf "make-$MAKE_V.tar.gz"
+  fi
 fi
 
-if [ "$BUILD" != "$HOST" ]; then
+if [ -e /usr/bin/x86_64-w64-mingw32-gcc ]; then
   echo "Stage: Patch step"
-  
+
   if [[ "$GCC_V" = "11.2.0" || "$GCC_V" = "11.1.0" ]]; then
     # GCC 11.x fails on canadian cross
     # see: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=100017
@@ -196,10 +197,6 @@ make all-target-libgcc -j "$JOBS"
 make install-strip-gcc || sudo make install-strip-gcc || su -c "make install-strip-gcc"
 make install-target-libgcc || sudo make install-target-libgcc || su -c "make install-target-libgcc"
 echo "Finished Compiling GCC-$GCC_V for MIPS N64 - (pass 1) outside of the source tree"
-# if [ "$BUILD" != "$HOST" ]; then
-#   echo "Installing GCC-$GCC_V  libgcc for foreign host"
-#   make install-target-libgcc DESTDIR="$FOREIGN_INSTALL_PATH" || sudo make install-target-libgcc DESTDIR="$FOREIGN_INSTALL_PATH" || su -c "make install-target-libgcc DESTDIR=\"$FOREIGN_INSTALL_PATH\""
-# fi
 
 echo "Compiling newlib-$NEWLIB_V"
 cd ../"newlib-$NEWLIB_V"
@@ -218,24 +215,25 @@ make install || sudo env PATH="$PATH" make install || su -c "env PATH=\"$PATH\" 
 echo "Finished Compiling newlib-$NEWLIB_V"
 
 
-if [ "$BUILD" != "$HOST" ]; then
+if [ -e /usr/bin/x86_64-w64-mingw32-gcc ]; then
   #INSTALL_PATH="$FOREIGN_INSTALL_PATH"
-
+u
   echo "Installing newlib-$NEWLIB_V for foreign host"
   # make install || sudo env PATH="$FOREIGN_INSTALL_PATH/bin" make install || su -c "env PATH=\"$FOREIGN_INSTALL_PATH/bin\" make install"
   # make install DESTDIR="$FOREIGN_INSTALL_PATH/mips64-elf/" || sudo make install DESTDIR="$FOREIGN_INSTALL_PATH/mips64-elf/" || su -c "make install DESTDIR=\"$FOREIGN_INSTALL_PATH/mips64-elf/\""
   make clean
 
+  FOREIGN_INSTALL_PATH="${N64_INST:-/usr/local/windowsx86_64/n64_toolchain}"
+  mkdir -p $FOREIGN_INSTALL_PATH
 
   echo "Compiling binutils-$BINUTILS_V for foreign host"
   cd ../"binutils-$BINUTILS_V"
   ./configure \
-    --prefix="$INSTALL_PATH" \
+    --prefix="$FOREIGN_INSTALL_PATH" \
     --target="$TARGET" \
     --with-cpu=mips64vr4300 \
     --disable-werror \
-    --build="$BUILD" \
-    --host="$HOST"
+    $TARG_XTRA_OPTS
   make -j "$JOBS"
   make install-strip || sudo make install-strip || su -c "make install-strip"
   make distclean # Ensure we can build it again (distclean is used as we may use it again for a native target).
@@ -248,7 +246,7 @@ rm -rf gcc_compile
 mkdir gcc_compile
 cd gcc_compile
 CFLAGS_FOR_TARGET="-O2" CXXFLAGS_FOR_TARGET=" -O2" ../"gcc-$GCC_V"/configure \
-  --prefix="$INSTALL_PATH" \
+  --prefix="$FOREIGN_INSTALL_PATH" \
   --target="$TARGET" \
   --with-arch=vr4300 \
   --with-tune=vr4300 \
@@ -264,8 +262,7 @@ CFLAGS_FOR_TARGET="-O2" CXXFLAGS_FOR_TARGET=" -O2" ../"gcc-$GCC_V"/configure \
   --disable-nls \
   --disable-werror \
   --with-system-zlib \
-  --build="$BUILD" \
-  --host="$HOST"
+  $TARG_XTRA_OPTS
 make -j "$JOBS"
 make install-strip || sudo make install-strip || su -c "make install-strip"
 echo "Finished Compiling gcc-$GCC_V for MIPS N64 - (pass 2) outside of the source tree"
@@ -274,19 +271,18 @@ if [ "$MAKE_V" != "" ]; then
 echo "Compiling make-$MAKE_V" # As make is otherwise not available on Windows
 cd ../"make-$MAKE_V"
   ./configure \
-    --prefix="$INSTALL_PATH" \
+    --prefix="$FOREIGN_INSTALL_PATH" \
     --disable-largefile \
     --disable-nls \
     --disable-rpath \
-    --build="$BUILD" \
-    --host="$HOST"
+    $TARG_XTRA_OPTS
 make -j "$JOBS"
 make install-strip || sudo make install-strip || su -c "make install-strip"
 make clean
 echo "Finished Compiling make-$MAKE_V"
 fi
 
-if [ "$BUILD" != "$HOST" ]; then
+if [ -e /usr/bin/x86_64-w64-mingw32-gcc ]; then
   echo "Cross compile successful"
 else
   echo "Native compile successful"
