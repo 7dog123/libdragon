@@ -36,7 +36,7 @@ jobs:
 
       # Build the toolchain if toolchain files changed w.r.t default which is
       - name: Build Toolchain Debian
-        if: ${{ steps.path_diff.outputs.changed == 1 }}
+        #if: ${{ steps.path_diff.outputs.changed == 1 }}
         run: |
           # install required dependencies
           sudo apt-get install -yq wget bzip2 gcc g++ make file libmpfr-dev libmpc-dev zlib1g-dev texinfo git gcc-multilib
@@ -99,7 +99,7 @@ jobs:
 
       # Build the toolchain if toolchain files changed w.r.t default which is
       - name: Build x86_64 Toolchain
-        if: ${{ steps.path_diff.outputs.changed == 1 }}
+        #if: ${{ steps.path_diff.outputs.changed == 1 }}
         run: |
           # Install required dependencies
           sudo apt-get install -yq wget bzip2 gcc g++ make file libmpfr-dev libmpc-dev zlib1g-dev texinfo git gcc-multilib
